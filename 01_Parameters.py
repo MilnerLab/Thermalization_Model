@@ -121,6 +121,22 @@ BASE_DEFAULTS: Dict[str, object] = dict(
     
 )
 
+'''
+#What Ian used in Early June before we started tweaking things...
+CASES: Dict[str, Dict[str, object]] = {
+    "Default": {},
+    #First two CS2 are accelerating
+    "CS2": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "Delta_alpha": 7.77, "rotor_frequency0": 18.997041712122172, "rotor_acceleration_ramp": 92.08265680229961, "rotor_phi0": 0.010999796687703782, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
+    "CS2_renormalised": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "rotational_model": 2, "B_star": 0.73, "D_star": 1.2e-3, "Delta_alpha": 7.77, "rotor_frequency0": 18.997041712122172, "rotor_acceleration_ramp": 92.08265680229961, "rotor_phi0": 0.010999796687703782, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
+    #second two CS2 are decelerating
+ #  "CS2": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "Delta_alpha": 7.77, "rotor_frequency0": 19.59825873379218, "rotor_acceleration_ramp": -78.21166769530845, "rotor_phi0": -0.792710145786345, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
+  #  "CS2_renormalised": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "rotational_model": 2, "B_star": 0.73, "D_star": 1.2e-3, "Delta_alpha": 7.77, "rotor_frequency0": 19.59825873379218, "rotor_acceleration_ramp": -78.21166769530845, "rotor_phi0": -0.792710145786345, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
+    "OCS": {"E0": E0_ALL, "tau_steady_state": 1.0, "tau_smooth": 0.05, "B": 6.08, "Delta_alpha": 4.67, "rotor_frequency0": 22.498737093913505, "rotor_acceleration_ramp": 97.59025698477419, "rotor_phi0": 0.5720343864739321, "C06": 18e3 * 242 / 2, "C08": 482e3 * 242 / 2, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242 / 2, "C28": 1080e3 * 242 / 2, "r2": 3.6 * 1.6},
+    "OCS_renormalised": {"E0": E0_ALL, "tau_steady_state": 1.0, "tau_smooth": 0.05, "B": 6.08, "rotational_model": 2, "B_star": 2.18, "D_star": 9.5e-3, "Delta_alpha": 4.67, "rotor_frequency0": 22.498737093913505, "rotor_acceleration_ramp": 97.59025698477419, "rotor_phi0": 0.5720343864739321, "C06": 18e3 * 242 / 2, "C08": 482e3 * 242 / 2, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242 / 2, "C28": 1080e3 * 242 / 2, "r2": 3.6 * 1.6},
+}'''
+
+
+
 
 CASES: Dict[str, Dict[str, object]] = {
     "Default": {},
