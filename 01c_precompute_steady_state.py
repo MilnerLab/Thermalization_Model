@@ -185,8 +185,14 @@ def main() -> None:
     nproc = max(1, int(p.get("nproc", 1)))
     if nproc <= 1 or nt <= 1:
         _init_01c_worker(js, y_blocks, p, beta)
-        results = [_compute_one_time_01c(task) for task in tasks]
+        results = []
+        report_every = max(1, nt // 10)
+        for i, task in enumerate(tasks):
+            results.append(_compute_one_time_01c(task))
+            if (i + 1) % report_every == 0 or i == nt - 1:
+                print(f"  01c: {i + 1}/{nt} time points", flush=True)
     else:
+        print(f"  01c: computing {nt} time points on {nproc} workers...", flush=True)
         ctx = mp.get_context("spawn")
         with ctx.Pool(
             processes=nproc,
@@ -194,6 +200,7 @@ def main() -> None:
             initargs=(js, y_blocks, p, beta),
         ) as pool:
             results = pool.map(_compute_one_time_01c, tasks, chunksize=max(1, int(p.get("chunksize", 1))))
+        print(f"  01c: {nt}/{nt} time points done", flush=True)
 
     results.sort(key=lambda item: item[0])
     for it, h_jm_i, rho_jm_i in results:
