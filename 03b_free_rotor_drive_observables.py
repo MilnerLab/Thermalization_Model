@@ -158,6 +158,7 @@ def main() -> None:
     js, ms = load_05a_basis(data_05a)
     ylm_path = Path(str(p.get("Ylm_h5_path", "data/01_spherical_harmonics/Ylm_blocks_JM.h5")))
     theta, phi, _ = load_yjm_grid(ylm_path, js, ms)
+    print(f"  03b: projecting {len(OBS_KEYS)} observables onto {js.size}-state basis...", flush=True)
     obs = observable_matrices(js, ms, ylm_path)
     l_matrix = np.diag(ms.astype(float)).astype(np.complex128)
 

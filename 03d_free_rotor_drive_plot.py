@@ -177,6 +177,7 @@ def main() -> None:
     idx_list = list(dict.fromkeys([0, t_grid.size // 2, t_grid.size - 1]))
     if h0.ndim == 2:
         h0 = np.broadcast_to(h0[None, :, :], h_drive.shape).copy()
+    print("  03d: plotting Hamiltonian matrices...", flush=True)
     for it in idx_list:
         tag = f"t_{t_grid[it]*1e3:.3g}ps_Omega0_{omega0_t[it]:.4g}".replace(".", "p")
         plot_matrix_heatmap(h0[it], tech_fig_dir / f"hamiltonian_bare_matrix_{tag}.pdf", r"$\Re H_{0,ab}(t)$")
@@ -184,6 +185,7 @@ def main() -> None:
         tag = f"t_{t_grid[it]*1e3:.3g}ps_Omega0_{omega0_t[it]:.4g}".replace(".", "p")
         plot_matrix_heatmap(h_drive[it], tech_fig_dir / f"hamiltonian_drive_matrix_{tag}.pdf", r"$\Re \Pi_{ab}(t)$")
 
+    print("  03d: plotting energy levels and mixing...", flush=True)
     x = t_grid * 1e3
     x_label = r"$t\;[\mathrm{ps}]$"
     n_plot = min(int(p.get("N_plot_modes", 5)), evals.shape[1])
@@ -328,6 +330,7 @@ def main() -> None:
             dense_ss = {}
             dense_ss_smooth = {}
 
+    print("  03d: plotting thermal observables...", flush=True)
     thermal_defs = [
         ("one", th_lab["one"], th_rot["one"], th_ss["one"], th_ss_smooth["one"], r"$\langle 1 \rangle_T$", "observable_one_thermal"),
         ("x2", np.sqrt(np.clip(th_lab["x2"], 0.0, None)), np.sqrt(np.clip(th_rot["x2"], 0.0, None)), np.sqrt(np.clip(th_ss["x2"], 0.0, None)), np.sqrt(np.clip(th_ss_smooth["x2"], 0.0, None)), r"$\sqrt{\langle (\theta-\pi/2)^2 \rangle_T}$", "observable_x2_thermal"),
@@ -661,6 +664,7 @@ def main() -> None:
         params.add_omega0_top_axis(plt.gca(), t_u * 1e3, omega_u)
         params.save_pdf(out_dir / f"{stem}_logscale.pdf")
 
+    print("  03d: plotting frequency diagrams...", flush=True)
     if compute_lab:
         _save_freq_diag(dense_lab.get("cos2theta2D", th_lab["cos2theta2D"]), t_dense if "cos2theta2D" in dense_lab else t_grid, omega0_dense if "cos2theta2D" in dense_lab else omega0_t, lab_fig_dir, "observable_cos2theta2d_thermal_frequency_diagram")
     if compute_rot:

@@ -215,19 +215,29 @@ def _tasks(lam_max: int) -> Iterable[tuple[int, int]]:
 
 
 def precompute_blocks_parallel(Js: np.ndarray, Ms: np.ndarray, lam_max: int, nproc: int, chunksize: int) -> Dict[Tuple[int, int], np.ndarray]:
+    n_tasks = (lam_max + 1) ** 2
     if nproc <= 1:
         _init_worker(Js, Ms)
         out: Dict[Tuple[int, int], np.ndarray] = {}
+        cur_lam = -1
         for t in _tasks(lam_max):
             lam, mu, Y = _compute_one(t)
             out[(lam, mu)] = Y
+            if lam != cur_lam:
+                cur_lam = lam
+                print(f"  01b: lambda={lam}/{lam_max}", flush=True)
         return out
 
     ctx = mp.get_context("fork" if hasattr(os, "fork") else "spawn")
     out: Dict[Tuple[int, int], np.ndarray] = {}
+    report_every = max(1, n_tasks // 5)
+    done = 0
     with ctx.Pool(processes=nproc, initializer=_init_worker, initargs=(Js, Ms)) as pool:
         for lam, mu, Y in pool.imap_unordered(_compute_one, _tasks(lam_max), chunksize=max(1, chunksize)):
             out[(lam, mu)] = Y
+            done += 1
+            if done % report_every == 0 or done == n_tasks:
+                print(f"  01b: {done}/{n_tasks} blocks done", flush=True)
     return out
 
 
@@ -242,6 +252,7 @@ def main() -> None:
         nproc=max(1, int(args.nproc)),
         chunksize=max(1, int(args.chunksize)),
     )
+    print("  01b: saving to HDF5...", flush=True)
     save_blocks(args.out_h5, Js, Ms, int(args.lam_max), blocks)
     print(f"Wrote: {args.out_h5}")
 

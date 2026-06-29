@@ -231,6 +231,8 @@ def main() -> None:
         ((t_grid.size, n_basis, n_basis), np.complex128),
     )
     use_streaming_output = params.exceeds_ram_threshold(p, bytes_needed)
+    print(f"  03a: diagonalizing {t_grid.size} time steps, n_basis={n_basis}", flush=True)
+    report_every = max(1, t_grid.size // 10)
 
     if use_streaming_output:
         with open_h5(h5py, data_h5, "w") as h5:
@@ -271,6 +273,8 @@ def main() -> None:
                     ds["E_eval"][it] = evals_i
                     ds["U_evec_re"][it] = np.real(evecs_i)
                     ds["U_evec_im"][it] = np.imag(evecs_i)
+                    if (it + 1) % report_every == 0 or it == t_grid.size - 1:
+                        print(f"  03a: {it + 1}/{t_grid.size} time steps", flush=True)
             finally:
                 if nproc > 1 and t_grid.size > 1:
                     pool.close()
@@ -283,8 +287,15 @@ def main() -> None:
         evecs = np.zeros((t_grid.size, n_basis, n_basis), dtype=np.complex128)
         if nproc <= 1 or t_grid.size <= 1:
             _init_03a_worker(y_blocks, coeffs, bare_base, ms.astype(float))
-            results = [_compute_one_time_05a(*task) for task in tasks]
+            results = []
+            for task in tasks:
+                result = _compute_one_time_05a(*task)
+                results.append(result)
+                it_r = result[0]
+                if (it_r + 1) % report_every == 0 or it_r == t_grid.size - 1:
+                    print(f"  03a: {it_r + 1}/{t_grid.size} time steps", flush=True)
         else:
+            print(f"  03a: computing {t_grid.size} steps on {nproc} workers...", flush=True)
             ctx = mp.get_context("fork")
             with ctx.Pool(
                 processes=nproc,
@@ -292,6 +303,7 @@ def main() -> None:
                 initargs=(y_blocks, coeffs, bare_base, ms.astype(float)),
             ) as pool:
                 results = pool.starmap(_compute_one_time_05a, tasks, chunksize=max(1, int(p.get("chunksize", 1))))
+            print(f"  03a: {t_grid.size}/{t_grid.size} time steps done", flush=True)
 
         results.sort(key=lambda x: x[0])
         for it, h0_i, h_drive_i, evals_i, evecs_i in results:

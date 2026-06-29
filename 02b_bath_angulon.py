@@ -524,6 +524,7 @@ def plot_sigma_green_and_levels() -> None:
     Gamma = np.zeros(lam_plot_max + 1)
 
     for lam in range(0, lam_plot_max + 1):
+        print(f"  02b: lambda={lam}/{lam_plot_max}", flush=True)
         Sig = Sigma_lam(w, lam, k, wk, p)
         G = G_lam(w, lam, Sig, p)
 

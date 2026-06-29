@@ -186,6 +186,7 @@ def build_steady_state_density_cache(
 ) -> np.ndarray:
     nt, n_basis = rho_target_jm.shape[:2]
     rho_ss = np.zeros((nt, n_basis, n_basis), dtype=np.complex128)
+    report_every = max(1, nt // 10)
     for it in range(nt):
         tau_it = None if tau_arr is None else float(tau_arr[it])
         rho_ss[it] = steady_state_density_from_target(
@@ -195,6 +196,8 @@ def build_steady_state_density_cache(
             tau_it,
             degeneracy_tol,
         )
+        if (it + 1) % report_every == 0 or it == nt - 1:
+            print(f"  03c: steady-state cache {it + 1}/{nt}", flush=True)
     return rho_ss
 
 
@@ -472,10 +475,14 @@ def main() -> None:
         j_cumulative_ss[it] = res["j_cumulative_ss"]
         trotter_change[:, it] = res["trotter_change"]
 
+    report_every = max(1, nt // 10)
     if nproc <= 1 or nt <= 1:
         for it in range(nt):
             _store_result(_compute_one_time_05c(it))
+            if (it + 1) % report_every == 0 or it == nt - 1:
+                print(f"  03c: observables {it + 1}/{nt}", flush=True)
     else:
+        done = 0
         ctx = mp.get_context("fork")
         with ctx.Pool(
             processes=nproc,
@@ -484,8 +491,12 @@ def main() -> None:
         ) as pool:
             for res in pool.imap_unordered(_compute_one_time_05c, range(nt), chunksize=max(1, int(p.get("chunksize", 1)))):
                 _store_result(res)
+                done += 1
+                if done % report_every == 0 or done == nt:
+                    print(f"  03c: observables {done}/{nt}", flush=True)
 
     if compute_ss_smooth and rho_ss_smooth_cache is not None:
+        print(f"  03c: smooth steady-state cache ({nt} steps)...", flush=True)
         for it in range(nt):
             rho_ss_smooth_cache[it] = params.causal_half_gaussian_average(
                 float(t[it]),
@@ -507,6 +518,7 @@ def main() -> None:
     dense_rot = {key: np.full(t_dense.size, np.nan, dtype=float) for key in ["cos2phi_lab", "cos2theta2D"]}
     dense_ss = {key: np.full(t_dense.size, np.nan, dtype=float) for key in ["cos2phi_lab", "cos2theta2D"]}
     dense_ss_smooth = {key: np.full(t_dense.size, np.nan, dtype=float) for key in ["cos2phi_lab", "cos2theta2D"]} if compute_ss_smooth else {}
+    print(f"  03c: dense rotating observables ({t_dense.size} steps)...", flush=True)
     current_left = current_right = -1
     rho_lab_left = rho_lab_right = None
     rho_rot_left = rho_rot_right = None
