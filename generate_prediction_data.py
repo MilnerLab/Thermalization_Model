@@ -13,8 +13,9 @@ import numpy as np
 from h5_locking import open_h5
 
 params = importlib.import_module("01_Parameters")
+pipeline = importlib.import_module("01_Pipeline")
 
-CASE_NAMES = ("CS2", "CS2_renormalised", "OCS", "OCS_renormalised")
+CASE_NAMES = [name for name, enabled in pipeline.CASE_ENABLED.items() if enabled]
 OUT_H5 = Path("Experimental_data") / "prediction_data.h5"
 METADATA_KEYS = (
     "case_name",

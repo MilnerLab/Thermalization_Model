@@ -9,6 +9,8 @@ __pycache__/
 
 figs/
 data/
+*.h5
+
 # C extensions
 *.so
 
