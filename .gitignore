@@ -8,7 +8,7 @@ __pycache__/
 .mplconfig/
 
 figs/
-
+data/
 # C extensions
 *.so
 
