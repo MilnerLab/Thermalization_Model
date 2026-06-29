@@ -30,7 +30,7 @@ path_data = Path(__file__).resolve().parent / "data"
 
 BASE_DEFAULTS: Dict[str, object] = dict(
     # Plotting and computating parameters
-    Nt_plot_rotating_observables=10,
+    Nt_plot_rotating_observables=2000,
     N_plot_modes=6,
     nproc=8,
     chunksize=1,
@@ -43,10 +43,10 @@ BASE_DEFAULTS: Dict[str, object] = dict(
     B_star=None,
     D_star=None,
     Delta_alpha=10,
-    E0=5e10,
+    E0=4e10,
     rotor_t_min = -250e-3, # ns
     rotor_t_max = 250e-3, # ns
-    Nt_main = 10,
+    Nt_main = 500,
     rotor_acceleration_ramp = 50.0, # dOmega0/dt in GHz / ns = MHz / ps
     rotor_frequency0 = 12.5, # GHz at t=0
     rotor_phi0 = 0.0, # rad at t=0
