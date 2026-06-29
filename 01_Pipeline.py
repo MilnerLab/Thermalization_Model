@@ -44,10 +44,10 @@ PLOT_STAGE_SET = {"03D", "GEN_PRED", "PLOT_EXP"}
 ACTIVE_RUN_PLAN = "run_plan_full"
 CASE_ENABLED: dict[str, bool] = {
     "Default":                False,
-    "CS2_accel_tau_initial":  False,
+    "CS2_accel_tau_initial":  True,
     "CS2_accel_tau_final":    True,
-    "CS2_accel_tau_ramp":     False,
-    "CS2_decel_tau_initial":  True,
+    "CS2_accel_tau_ramp":     True,
+    "CS2_decel_tau_initial":  False,
     "CS2_decel_tau_final":    False,
     "CS2_decel_tau_ramp":     False,
     "OCS_accel_tau_initial":  True,
@@ -751,10 +751,12 @@ def run_stage_script(script_name: str, case_name: str) -> None:
     )
 
 
-def run_post_stage_script(script_name: str) -> None:
+def run_post_stage_script(script_name: str, enabled_case_names: list[str] | None = None) -> None:
     """Run a post-processing stage script (not case-dependent)."""
     env = os.environ.copy()
     env.pop("PENDULON_CASE", None)
+    if enabled_case_names is not None:
+        env["PENDULON_ENABLED_CASES"] = ",".join(enabled_case_names)
     subprocess.run(
         [sys.executable, script_name],
         check=True,
@@ -845,7 +847,7 @@ def main() -> None:
             print(f"[run ][post] {script_name}", flush=True)
             reset_project_modules()
             t0 = time.perf_counter()
-            run_post_stage_script(script_name)
+            run_post_stage_script(script_name, active_case_names)
             dt = time.perf_counter() - t0
             timings.append(("[post]", script_name, dt))
             print(f"[done][post] {script_name} in {format_seconds(dt)}", flush=True)

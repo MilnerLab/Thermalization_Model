@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import importlib
+import os
 import multiprocessing as mp
 
 import h5py
@@ -483,7 +484,7 @@ def main() -> None:
                 print(f"  03c: observables {it + 1}/{nt}", flush=True)
     else:
         done = 0
-        ctx = mp.get_context("fork")
+        ctx = mp.get_context("fork" if hasattr(os, "fork") else "spawn")
         with ctx.Pool(
             processes=nproc,
             initializer=_init_05c_worker,

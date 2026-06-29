@@ -23,19 +23,16 @@ plt.rcParams["pdf.fonttype"] = 42
 plt.rcParams["ps.fonttype"] = 42
 plt.rcParams["pdf.use14corefonts"] = True
 plt.rcParams["axes.unicode_minus"] = False
-plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.sans-serif"] = ["DejaVu Sans"]
-plt.rcParams["font.weight"] = "normal"
-plt.rcParams["mathtext.fontset"] = "dejavusans"
+
 CASE_ENV_VAR = "PENDULON_CASE"
 path_data = Path(__file__).resolve().parent / "data"
 
 
 BASE_DEFAULTS: Dict[str, object] = dict(
     # Plotting and computating parameters
-    Nt_plot_rotating_observables=100,
+    Nt_plot_rotating_observables=10,
     N_plot_modes=6,
-    nproc=1,
+    nproc=8,
     chunksize=1,
     ram_threshold_gb=16.0,
     ram_guard_fraction=0.85,
@@ -49,7 +46,7 @@ BASE_DEFAULTS: Dict[str, object] = dict(
     E0=5e10,
     rotor_t_min = -250e-3, # ns
     rotor_t_max = 250e-3, # ns
-    Nt_main = 500,
+    Nt_main = 10,
     rotor_acceleration_ramp = 50.0, # dOmega0/dt in GHz / ns = MHz / ps
     rotor_frequency0 = 12.5, # GHz at t=0
     rotor_phi0 = 0.0, # rad at t=0
@@ -522,6 +519,54 @@ def save_pdf(path: Path, retries: int = 4, apply_tight_layout: bool = True) -> N
             time.sleep(0.3 * (attempt + 1))
     plt.close(fig)
 
+def save_png(path: Path, retries: int = 4, apply_tight_layout: bool = True) -> None:
+    fig = plt.gcf()
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if apply_tight_layout:
+        try:
+            fig.tight_layout()
+        except Exception:
+            # Some figures with secondary axes or dense mathtext can make
+            # tight_layout brittle or disproportionately slow. Fall back to the
+            # current layout instead of aborting the whole pipeline.
+            pass
+    for attempt in range(max(1, int(retries))):
+        tmp_path = path.with_name(f".{path.stem}.tmp{attempt}.png")
+        try:
+            fig.savefig(tmp_path, format="png")
+            tmp_path.replace(path)
+            break
+        except Exception as e:
+            msg = str(e).lower()
+            is_timeout = isinstance(e, TimeoutError) or getattr(e, "errno", None) == 60
+            is_stream_error = "stream state" in msg or "operation timed out" in msg
+            is_pdf_font_error = isinstance(e, zlib.error) or "embedttf" in msg or "writefonts" in msg or "type42" in msg
+            tmp_path.unlink(missing_ok=True)
+            if is_pdf_font_error:
+                # Fall back to simpler PDF settings when Type-42 font embedding
+                # trips over backend_pdf state in long in-process pipeline runs.
+                try:
+                    with plt.rc_context({
+                        "pdf.fonttype": 3,
+                        "ps.fonttype": 3,
+                        "pdf.use14corefonts": False,
+                        "pdf.compression": 0,
+                    }):
+                        fig.savefig(tmp_path, format="pdf")
+                    tmp_path.replace(path)
+                    break
+                except Exception as fallback_error:
+                    msg = f"{msg} | fallback: {str(fallback_error).lower()}"
+                    is_timeout = is_timeout or isinstance(fallback_error, TimeoutError) or getattr(fallback_error, "errno", None) == 60
+                    is_stream_error = is_stream_error or "stream state" in str(fallback_error).lower() or "operation timed out" in str(fallback_error).lower()
+                    tmp_path.unlink(missing_ok=True)
+                    e = fallback_error
+            if (not is_timeout and not is_stream_error and not is_pdf_font_error) or (attempt == retries - 1):
+                plt.close(fig)
+                raise
+            time.sleep(0.3 * (attempt + 1))
+    plt.close(fig)
 
 def add_omega0_top_axis(ax: plt.Axes, t_ps: np.ndarray, Omega: np.ndarray) -> None:
     """Add a secondary top x-axis showing Omega0(t) for time-domain plots."""

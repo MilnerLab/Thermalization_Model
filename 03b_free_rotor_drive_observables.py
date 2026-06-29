@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import importlib
+import os
 import multiprocessing as mp
 
 import h5py
@@ -146,7 +147,7 @@ def observable_matrices(js: np.ndarray, ms: np.ndarray, ylm_path: Path) -> dict[
         _init_05b_worker(y_basis, weights, vals)
         pairs = [_project_one_observable_05b(key) for key in OBS_KEYS]
     else:
-        ctx = mp.get_context("fork")
+        ctx = mp.get_context("fork" if hasattr(os, "fork") else "spawn")
         with ctx.Pool(processes=min(nproc, len(OBS_KEYS)), initializer=_init_05b_worker, initargs=(y_basis, weights, vals)) as pool:
             pairs = pool.map(_project_one_observable_05b, OBS_KEYS, chunksize=1)
     return {key: mat for key, mat in pairs}

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import importlib
+import os
 import multiprocessing as mp
 
 import h5py
@@ -254,7 +255,7 @@ def main() -> None:
             if nproc <= 1 or t_grid.size <= 1:
                 result_iter = (_compute_one_time_05a(*task) for task in tasks)
             else:
-                ctx = mp.get_context("fork")
+                ctx = mp.get_context("fork" if hasattr(os, "fork") else "spawn")
                 pool = ctx.Pool(
                     processes=nproc,
                     initializer=_init_03a_worker,
@@ -296,7 +297,7 @@ def main() -> None:
                     print(f"  03a: {it_r + 1}/{t_grid.size} time steps", flush=True)
         else:
             print(f"  03a: computing {t_grid.size} steps on {nproc} workers...", flush=True)
-            ctx = mp.get_context("fork")
+            ctx = mp.get_context("fork" if hasattr(os, "fork") else "spawn")
             with ctx.Pool(
                 processes=nproc,
                 initializer=_init_03a_worker,
