@@ -23,6 +23,10 @@ plt.rcParams["pdf.fonttype"] = 42
 plt.rcParams["ps.fonttype"] = 42
 plt.rcParams["pdf.use14corefonts"] = True
 plt.rcParams["axes.unicode_minus"] = False
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.sans-serif"] = ["DejaVu Sans"]
+plt.rcParams["font.weight"] = "normal"
+plt.rcParams["mathtext.fontset"] = "dejavusans"
 CASE_ENV_VAR = "PENDULON_CASE"
 path_data = Path(__file__).resolve().parent / "data"
 
@@ -121,29 +125,59 @@ BASE_DEFAULTS: Dict[str, object] = dict(
     
 )
 
-'''
-#What Ian used in Early June before we started tweaking things...
+
+
+
+
+
+# ── global knobs ─────────────────────────────────────────────────────────────
+E0_ALL: float = 4e10          # change here to rescale all cases at once
+
+# ── CS2 tau presets ──────────────────────────────────────────────────────────
+_CS2_TAU_INITIAL    = dict(tau_steady_state=0.4,  tau_steady_state_final=None, tau_smooth=0.02)
+_CS2_TAU_FINAL      = dict(tau_steady_state=0.05, tau_steady_state_final=None, tau_smooth=0.02)
+_CS2_TAU_RAMP_ACCEL = dict(tau_steady_state=0.2,  tau_steady_state_final=0.05, tau_smooth=0.02)
+_CS2_TAU_RAMP_DECEL = dict(tau_steady_state=0.05, tau_steady_state_final=0.2,  tau_smooth=0.02)
+
+# ── OCS tau presets ───────────────────────────────────────────────────────────
+_OCS_TAU_INITIAL    = dict(tau_steady_state=1.0, tau_steady_state_final=None, tau_smooth=0.05)
+_OCS_TAU_FINAL      = dict(tau_steady_state=0.5, tau_steady_state_final=None, tau_smooth=0.05)
+_OCS_TAU_RAMP_ACCEL = dict(tau_steady_state=1.0, tau_steady_state_final=0.5,  tau_smooth=0.05)
+_OCS_TAU_RAMP_DECEL = dict(tau_steady_state=0.5, tau_steady_state_final=1.0,  tau_smooth=0.05)
+
+# ── molecule coupling parameters ─────────────────────────────────────────────
+_CS2 = dict(
+    E0=E0_ALL, B=3.27, Delta_alpha=7.77,
+    C06=18e3*242,   C08=482e3*242,   r0=3.6*1.6,
+    C26=1.38e3*242, C28=1080e3*242,  r2=3.6*1.6,
+)
+_OCS = dict(
+    E0=E0_ALL, B=6.08, Delta_alpha=4.67,
+    C06=18e3*242/2, C08=482e3*242/2, r0=3.6*1.6,
+    C26=1.38e3*242/2, C28=1080e3*242/2, r2=3.6*1.6,
+)
+
+# ── drive parameters ─────────────────────────────────────────────────────────
+_CS2_ACCEL = dict(rotor_frequency0=18.997041712122172,  rotor_acceleration_ramp= 92.08265680229961,  rotor_phi0= 0.010999796687703782)
+_CS2_DECEL = dict(rotor_frequency0=19.59825873379218,   rotor_acceleration_ramp=-78.21166769530845,  rotor_phi0=-0.792710145786345)
+_OCS_ACCEL = dict(rotor_frequency0=22.498737093913505,  rotor_acceleration_ramp= 97.59025698477419,  rotor_phi0= 0.5720343864739321)
+_OCS_DECEL = dict(rotor_frequency0=22.498737093913505,  rotor_acceleration_ramp=-97.59025698477419,  rotor_phi0= 0.5720343864739321)  # phi0 placeholder
+
+# ── cases ─────────────────────────────────────────────────────────────────────
 CASES: Dict[str, Dict[str, object]] = {
-    "Default": {},
-    #First two CS2 are accelerating
-    "CS2": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "Delta_alpha": 7.77, "rotor_frequency0": 18.997041712122172, "rotor_acceleration_ramp": 92.08265680229961, "rotor_phi0": 0.010999796687703782, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
-    "CS2_renormalised": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "rotational_model": 2, "B_star": 0.73, "D_star": 1.2e-3, "Delta_alpha": 7.77, "rotor_frequency0": 18.997041712122172, "rotor_acceleration_ramp": 92.08265680229961, "rotor_phi0": 0.010999796687703782, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
-    #second two CS2 are decelerating
- #  "CS2": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "Delta_alpha": 7.77, "rotor_frequency0": 19.59825873379218, "rotor_acceleration_ramp": -78.21166769530845, "rotor_phi0": -0.792710145786345, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
-  #  "CS2_renormalised": {"E0": E0_ALL, "tau_steady_state": 0.4, "tau_smooth": 0.02, "B": 3.27, "rotational_model": 2, "B_star": 0.73, "D_star": 1.2e-3, "Delta_alpha": 7.77, "rotor_frequency0": 19.59825873379218, "rotor_acceleration_ramp": -78.21166769530845, "rotor_phi0": -0.792710145786345, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
-    "OCS": {"E0": E0_ALL, "tau_steady_state": 1.0, "tau_smooth": 0.05, "B": 6.08, "Delta_alpha": 4.67, "rotor_frequency0": 22.498737093913505, "rotor_acceleration_ramp": 97.59025698477419, "rotor_phi0": 0.5720343864739321, "C06": 18e3 * 242 / 2, "C08": 482e3 * 242 / 2, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242 / 2, "C28": 1080e3 * 242 / 2, "r2": 3.6 * 1.6},
-    "OCS_renormalised": {"E0": E0_ALL, "tau_steady_state": 1.0, "tau_smooth": 0.05, "B": 6.08, "rotational_model": 2, "B_star": 2.18, "D_star": 9.5e-3, "Delta_alpha": 4.67, "rotor_frequency0": 22.498737093913505, "rotor_acceleration_ramp": 97.59025698477419, "rotor_phi0": 0.5720343864739321, "C06": 18e3 * 242 / 2, "C08": 482e3 * 242 / 2, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242 / 2, "C28": 1080e3 * 242 / 2, "r2": 3.6 * 1.6},
-}'''
-
-
-
-
-CASES: Dict[str, Dict[str, object]] = {
-    "Default": {},
-    "CS2": {"E0": 1e10, "tau_steady_state": 0.2, "tau_steady_state_final": 0.05, "tau_smooth": 0.02, "B": 3.27, "Delta_alpha": 7.77, "rotor_frequency0": 18.997041712122172, "rotor_acceleration_ramp": 92.08265680229961, "rotor_phi0": 0.010999796687703782, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
-    "CS2_renormalised": {"E0": 3e10, "tau_steady_state": 0.2, "tau_steady_state_final": 0.05, "tau_smooth": 0.02, "B": 3.27, "rotational_model": 2, "B_star": 0.73, "D_star": 1.2e-3, "Delta_alpha": 7.77, "rotor_frequency0": 18.997041712122172, "rotor_acceleration_ramp": 92.08265680229961, "rotor_phi0": 0.010999796687703782, "C06": 18e3 * 242, "C08": 482e3 * 242, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242, "C28": 1080e3 * 242, "r2": 3.6 * 1.6},
-    "OCS": {"E0": 1e10, "tau_steady_state": 1.0, "tau_steady_state_final": 0.5, "tau_smooth": 0.05, "B": 6.08, "Delta_alpha": 4.67, "rotor_frequency0": 22.498737093913505, "rotor_acceleration_ramp": 97.59025698477419, "rotor_phi0": 0.5720343864739321, "C06": 18e3 * 242 / 2, "C08": 482e3 * 242 / 2, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242 / 2, "C28": 1080e3 * 242 / 2, "r2": 3.6 * 1.6},
-    "OCS_renormalised": {"E0": 3e10, "tau_steady_state": 1.0, "tau_steady_state_final": 0.5, "tau_smooth": 0.05, "B": 6.08, "rotational_model": 2, "B_star": 2.18, "D_star": 9.5e-3, "Delta_alpha": 4.67, "rotor_frequency0": 22.498737093913505, "rotor_acceleration_ramp": 97.59025698477419, "rotor_phi0": 0.5720343864739321, "C06": 18e3 * 242 / 2, "C08": 482e3 * 242 / 2, "r0": 3.6 * 1.6, "C26": 1.38e3 * 242 / 2, "C28": 1080e3 * 242 / 2, "r2": 3.6 * 1.6},
+    "Default":                {},
+    "CS2_accel_tau_initial":  {**_CS2, **_CS2_ACCEL, **_CS2_TAU_INITIAL},
+    "CS2_accel_tau_final":    {**_CS2, **_CS2_ACCEL, **_CS2_TAU_FINAL},
+    "CS2_accel_tau_ramp":     {**_CS2, **_CS2_ACCEL, **_CS2_TAU_RAMP_ACCEL},
+    "CS2_decel_tau_initial":  {**_CS2, **_CS2_DECEL, **_CS2_TAU_INITIAL},
+    "CS2_decel_tau_final":    {**_CS2, **_CS2_DECEL, **_CS2_TAU_FINAL},
+    "CS2_decel_tau_ramp":     {**_CS2, **_CS2_DECEL, **_CS2_TAU_RAMP_DECEL},
+    "OCS_accel_tau_initial":  {**_OCS, **_OCS_ACCEL, **_OCS_TAU_INITIAL},
+    "OCS_accel_tau_final":    {**_OCS, **_OCS_ACCEL, **_OCS_TAU_FINAL},
+    "OCS_accel_tau_ramp":     {**_OCS, **_OCS_ACCEL, **_OCS_TAU_RAMP_ACCEL},
+    "OCS_decel_tau_initial":  {**_OCS, **_OCS_DECEL, **_OCS_TAU_INITIAL},
+    "OCS_decel_tau_final":    {**_OCS, **_OCS_DECEL, **_OCS_TAU_FINAL},
+    "OCS_decel_tau_ramp":     {**_OCS, **_OCS_DECEL, **_OCS_TAU_RAMP_DECEL},
 }
 
 

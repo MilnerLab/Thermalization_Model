@@ -43,11 +43,19 @@ PLOT_STAGE_SET = {"03D", "GEN_PRED", "PLOT_EXP"}
 
 ACTIVE_RUN_PLAN = "run_plan_full"
 CASE_ENABLED: dict[str, bool] = {
-    "Default": False,
-    "CS2": False,
-    "CS2_renormalised": False,
-    "OCS": True,
-    "OCS_renormalised": False,
+    "Default":                False,
+    "CS2_accel_tau_initial":  False,
+    "CS2_accel_tau_final":    True,
+    "CS2_accel_tau_ramp":     False,
+    "CS2_decel_tau_initial":  True,
+    "CS2_decel_tau_final":    False,
+    "CS2_decel_tau_ramp":     False,
+    "OCS_accel_tau_initial":  True,
+    "OCS_accel_tau_final":    False,
+    "OCS_accel_tau_ramp":     False,
+    "OCS_decel_tau_initial":  False,
+    "OCS_decel_tau_final":    False,
+    "OCS_decel_tau_ramp":     False,
 }
 CASE_STAGE_OVERRIDES: dict[str, dict[str, bool] | str] = {
     # Example:
