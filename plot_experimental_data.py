@@ -8,6 +8,8 @@ from pathlib import Path
 import importlib
 
 import numpy as np
+import csv
+
 
 params = importlib.import_module("01_Parameters")
 import h5py
@@ -346,6 +348,23 @@ def compute_frequency_map(path: Path, t: np.ndarray, signal: np.ndarray) -> tupl
     amp = np.abs(coefs)
     return t * 1e3, freqs, amp
 
+def save_data_csv(
+    path: Path,
+    case_name: str,
+    label: str,
+    t_pred: np.ndarray,
+    signal_pred: np.ndarray,    
+    reverse_prediction_time: bool = False,
+) -> None:
+    alpha = prediction_signal_alpha(case_name, path)
+    t_out, signal_out = transform_prediction_trace(t_pred, signal_pred, reverse_prediction_time, alpha)
+ #   params.save_pdf(path.with_name(f"{path.stem}_cos2theta2D_vs_t_with_model{suffix}.pdf"))
+    suffix = _prediction_file_suffix(label) 
+    with Path(path.with_name(f"{path.stem}_cos2theta2D_vs_t_with_model{suffix}.csv")).open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        for d, m,v in zip(t_pred*1e3, signal_pred,signal_out):
+                w.writerow([d, m,v])
+        print("Data saved to:",path)
 
 def plot_frequency_map(
     path: Path,
@@ -438,6 +457,13 @@ def main() -> None:
                         path, t, signal, err, pred_case_name, label, t_pred, signal_pred, color,
                         reverse_prediction_time=reverse,
                     )
+                    save_data_csv(    
+                        path = path,
+                        case_name = pred_case_name,
+                        label = label,
+                        t_pred = t_pred,
+                        signal_pred= signal_pred,    
+                                  )
 
 
 if __name__ == "__main__":
