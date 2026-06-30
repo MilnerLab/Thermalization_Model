@@ -30,25 +30,6 @@ EXPERIMENTAL_DATA_PATTERNS = (
     "*_decelerating_droplets.csv",
 )
 
-PREDICTION_SIGNAL_ALPHA_BY_DATASET = {
-    "CS2_accelerating_droplets": {
-        "CS2": 0.072697915*1.5,
-        "CS2_renormalised": 0.0449806687*1.5,
-    },
-    "CS2_decelerating_droplets": {
-        "CS2": 0.067970648*1.5,
-        "CS2_renormalised": 0.0434283417*1.5,
-    },
-    "OCS_accelerating_droplets": {
-        "OCS": 0.554924647,
-        "OCS_renormalised": 0.268849693,
-    },
-    "OCS_decelerating_droplets": {
-        "OCS": 0.658379079,
-        "OCS_renormalised": 0.321609377,
-    },
-}
-
 CASE_BY_TOKEN = {
     "OCS": "OCS",
     "CS2": "CS2",
@@ -137,29 +118,26 @@ def prediction_time_shift_ps(reverse_prediction_time: bool) -> float:
     return float(PREDICTION_TIME_SHIFT_PS_ACCELERATING)
 
 
-def _mol_and_renorm_from_pred_case(case_name: str) -> tuple[str | None, bool]:
-    is_renorm = case_name.endswith("_renormalised")
-    base = case_name[:-len("_renormalised")] if is_renorm else case_name
-    if base in CASE_BY_TOKEN.values():
-        return base, is_renorm
-    base_upper = base.upper()
-    for token, mol in CASE_BY_TOKEN.items():
-        if base_upper.startswith(token):
-            return mol, is_renorm
-    return None, is_renorm
-
-
-def prediction_signal_alpha(case_name: str, path: Path | None = None) -> float:
-    if path is not None:
-        dataset_alphas = PREDICTION_SIGNAL_ALPHA_BY_DATASET.get(Path(path).stem, {})
-        if case_name in dataset_alphas:
-            return float(dataset_alphas[case_name])
-        mol, is_renorm = _mol_and_renorm_from_pred_case(case_name)
-        if mol is not None:
-            mol_key = f"{mol}_renormalised" if is_renorm else mol
-            if mol_key in dataset_alphas:
-                return float(dataset_alphas[mol_key])
-    return float("nan")
+def fit_signal_alpha(
+    t_exp: np.ndarray,
+    signal_exp: np.ndarray,
+    t_pred: np.ndarray,
+    signal_pred: np.ndarray,
+) -> float:
+    """Least-squares alpha: minimise ||alpha*(pred-0.5)+0.5 - exp||^2."""
+    t_lo = max(float(t_exp[0]), float(t_pred[0]))
+    t_hi = min(float(t_exp[-1]), float(t_pred[-1]))
+    mask = (t_exp >= t_lo) & (t_exp <= t_hi)
+    if mask.sum() < 2:
+        return float("nan")
+    t_common = t_exp[mask]
+    y = signal_exp[mask]
+    pred_interp = np.interp(t_common, t_pred, signal_pred)
+    x = pred_interp - 0.5
+    denom = float(np.dot(x, x))
+    if denom == 0.0:
+        return float("nan")
+    return float(np.dot(x, y - 0.5) / denom)
 
 
 def rescale_prediction_signal(signal: np.ndarray, alpha: float) -> np.ndarray:
@@ -188,9 +166,9 @@ def plot_trace_with_single_prediction(
     t_pred: np.ndarray,
     signal_pred: np.ndarray,
     color: str,
+    alpha: float,
     reverse_prediction_time: bool = False,
 ) -> None:
-    alpha = prediction_signal_alpha(case_name, path)
     t_out, signal_out = transform_prediction_trace(t_pred, signal_pred, reverse_prediction_time, alpha)
     y_all = np.concatenate([signal - err, signal + err, signal_out])
     y_min = float(np.min(y_all))
@@ -214,9 +192,9 @@ def save_data_csv(
     case_name: str,
     t_pred: np.ndarray,
     signal_pred: np.ndarray,
+    alpha: float,
     reverse_prediction_time: bool = False,
 ) -> None:
-    alpha = prediction_signal_alpha(case_name, path)
     t_out, signal_out = transform_prediction_trace(t_pred, signal_pred, reverse_prediction_time, alpha)
     with Path(path.with_name(f"{path.stem}_{case_name}_cos2theta2D_vs_t_model_only.csv")).open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -289,9 +267,14 @@ def main() -> None:
                 except FileNotFoundError as exc:
                     print(f"Skipping {label} for {path.name}: {exc}", flush=True)
                     continue
+                t_tr, sig_tr = maybe_reverse_prediction_time(t_pred, signal_pred, reverse)
+                t_tr = t_tr + prediction_time_shift_ps(reverse) * 1e-3
+                alpha = fit_signal_alpha(t, signal, t_tr, sig_tr)
+                print(f"  alpha ({pred_case_name}): {alpha:.6g}", flush=True)
                 color = PREDICTION_COLORS[i % len(PREDICTION_COLORS)]
                 plot_trace_with_single_prediction(
                     path, t, signal, err, pred_case_name, label, t_pred, signal_pred, color,
+                    alpha=alpha,
                     reverse_prediction_time=reverse,
                 )
                 save_data_csv(
@@ -299,6 +282,7 @@ def main() -> None:
                     case_name=pred_case_name,
                     t_pred=t_pred,
                     signal_pred=signal_pred,
+                    alpha=alpha,
                 )
 
 

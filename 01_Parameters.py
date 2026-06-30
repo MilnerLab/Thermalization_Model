@@ -30,9 +30,9 @@ path_data = Path(__file__).resolve().parent / "data"
 
 BASE_DEFAULTS: Dict[str, object] = dict(
     # Plotting and computating parameters
-    Nt_plot_rotating_observables=2000,
+    Nt_plot_rotating_observables=100,
     N_plot_modes=6,
-    nproc=8,
+    nproc=1,
     chunksize=1,
     ram_threshold_gb=16.0,
     ram_guard_fraction=0.85,
@@ -131,16 +131,22 @@ BASE_DEFAULTS: Dict[str, object] = dict(
 E0_ALL: float = 4e10          # change here to rescale all cases at once
 
 # ── CS2 tau presets ──────────────────────────────────────────────────────────
-_CS2_TAU_INITIAL    = dict(tau_steady_state=0.4,  tau_steady_state_final=None, tau_smooth=0.02)
-_CS2_TAU_FINAL      = dict(tau_steady_state=0.05, tau_steady_state_final=None, tau_smooth=0.02)
-_CS2_TAU_RAMP_ACCEL = dict(tau_steady_state=0.2,  tau_steady_state_final=0.05, tau_smooth=0.02)
-_CS2_TAU_RAMP_DECEL = dict(tau_steady_state=0.05, tau_steady_state_final=0.2,  tau_smooth=0.02)
+_CS2_LOWER_TAU: float = 0.05
+_CS2_UPPER_TAU: float = 0.5
+
+_CS2_TAU_INITIAL    = dict(tau_steady_state=_CS2_UPPER_TAU,  tau_steady_state_final=None, tau_smooth=0.02)
+_CS2_TAU_FINAL      = dict(tau_steady_state=_CS2_LOWER_TAU, tau_steady_state_final=None, tau_smooth=0.02)
+_CS2_TAU_RAMP_ACCEL = dict(tau_steady_state=_CS2_UPPER_TAU,  tau_steady_state_final=_CS2_LOWER_TAU, tau_smooth=0.02)
+_CS2_TAU_RAMP_DECEL = dict(tau_steady_state=_CS2_LOWER_TAU, tau_steady_state_final=_CS2_UPPER_TAU,  tau_smooth=0.02)
 
 # ── OCS tau presets ───────────────────────────────────────────────────────────
-_OCS_TAU_INITIAL    = dict(tau_steady_state=1.0, tau_steady_state_final=None, tau_smooth=0.05)
-_OCS_TAU_FINAL      = dict(tau_steady_state=0.5, tau_steady_state_final=None, tau_smooth=0.05)
-_OCS_TAU_RAMP_ACCEL = dict(tau_steady_state=1.0, tau_steady_state_final=0.5,  tau_smooth=0.05)
-_OCS_TAU_RAMP_DECEL = dict(tau_steady_state=0.5, tau_steady_state_final=1.0,  tau_smooth=0.05)
+_OCS_LOWER_TAU: float = 0.05 # maybe more like 0.5
+_OCS_UPPER_TAU: float = 3
+
+_OCS_TAU_INITIAL    = dict(tau_steady_state=_OCS_UPPER_TAU, tau_steady_state_final=None, tau_smooth=0.05)
+_OCS_TAU_FINAL      = dict(tau_steady_state=_OCS_LOWER_TAU, tau_steady_state_final=None, tau_smooth=0.05)
+_OCS_TAU_RAMP_ACCEL = dict(tau_steady_state=_OCS_UPPER_TAU, tau_steady_state_final=_OCS_LOWER_TAU,  tau_smooth=0.05)
+_OCS_TAU_RAMP_DECEL = dict(tau_steady_state=_OCS_LOWER_TAU, tau_steady_state_final=_OCS_UPPER_TAU,  tau_smooth=0.05)
 
 # ── molecule coupling parameters ─────────────────────────────────────────────
 _CS2 = dict(
